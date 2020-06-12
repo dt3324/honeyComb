@@ -1,0 +1,80 @@
+logging:
+  level:
+    root: info
+cluster:
+  name: elasticsearch
+  ip: 80.213.1.124
+  port: 9300
+maxConnection: 2
+# MongoDB
+mongo:
+  base:
+    # 集群
+    cluster-username: root
+    cluster-password: gb.2312
+    cluster-db: admin
+    cluster-hosts:
+      - ip: 80.213.1.120
+        port: 27017
+      - ip: 80.213.1.121
+        port: 27017
+      - ip: 80.213.1.122
+        port: 27017
+    # 可自行按以上格式添加集群服务器 // 注意符号 - 和缩进
+  bcp:
+    # 集群
+    cluster-username: root
+    cluster-password: gb.2312
+    cluster-db: admin
+    cluster-hosts:
+      - ip: 80.213.1.120
+        port: 27017
+      - ip: 80.213.1.121
+        port: 27017
+      - ip: 80.213.1.122
+        port: 27017
+    # 可自行按以上格式添加集群服务器 // 注意符号 - 和缩进
+spring:
+  ftp:
+    ip: 80.213.1.127
+    port: 21
+    user: downloader
+    pwd: downloaderfc
+  jpa:
+    database: MYSQL
+  datasource:
+    url: jdbc:mysql://80.213.1.121:3306/?useUnicode=true&characterEncoding=utf8&autoReconnect=true&allowMultiQueries=true&useSSL=false
+    username: root
+    password: gb.2312
+    driver-class-name: com.mysql.jdbc.Driver
+  user:
+    timeLength: 300000
+    count: 5
+    operationTimeBetween: 60000000000
+    ttlMillis: 999999999
+    JWT_SECRET: 7786df7fc3a34e26a61c034d5ec8245d
+  #远程调用服务器IP
+  remote:
+    user:
+      host: 80.213.1.126
+      port: 11111
+    virtual:
+      host: 80.93.24.132
+      port: 8092
+  redis:
+    host: 80.213.1.124
+    port: 6379
+    database: 0
+    password: gb.2312
+    jedis:
+      pool:
+        max-active: 600
+        max-wait: -1ms
+        max-idle: 300
+        min-idle: 20
+    timeout: 6000ms
+    saveTime: 1
+tomcat: #采集数据统计中导出表格需要配置的Tomcat的IP跟端口号
+  tomcatUrl: 80.213.1.125:80
+js:
+  locations: classpath:js/countMap.js, classpath:js/countReduce.js

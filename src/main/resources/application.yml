@@ -1,0 +1,13 @@
+mybatis:
+  type-aliases-package: com.hnf.honeycomb.bean
+  mapper-locations: classpath:mappers/*.xml
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+spring:
+  profiles:
+    active: prod
+  application:
+    name: honeyComb
+server:
+  port: 10001

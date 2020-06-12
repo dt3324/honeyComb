@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnf.honeycomb.mapper.DeviceMapper">
+    <!-- 查询最大的id值 -->
+    <select id="findMaxFetchLogId" resultType="int">
+		SELECT
+			MAX(_id) as maxId
+		FROM
+			collector.t_fetchlog
+	</select>
+    <!-- 查询大蜜蜂采集日志-->
+    <select id="findFetchLogMore" parameterType="long" resultType="map">
+		SELECT
+			ctf.fetchtime,ctf._id,ctf.fk_device_unique,fk_case_unique,ctf.police_number,ctf.type as collType,ctf.department_code
+		FROM
+			collector.t_fetchlog ctf
+		WHERE ctf._id > #{id} AND (ctf.type = 1 or ctf.type = 3)
+	</select>
+    <!-- 查询小蜜蜂采集日志-->
+    <select id="findMoreSmallFetchLog" parameterType="Long" resultType="map">
+		SELECT
+			ctf.fetchtime,ctf._id,ctf.fk_device_unique,ctf.police_number,ctf.type as collType,ctf.department_code
+		FROM
+			collector.t_fetchlog ctf
+		WHERE ctf._id > #{id} AND ctf.type = 2
+	</select>
+    <!-- 查询对应加密狗号采集的某部设备的采集次数 -->
+    <select id="countUpLoadTimeByDUniqueAndDogNum" parameterType="map" resultType="int">
+		SELECT
+			COUNT(fetchCount)
+		FROM
+			(SELECT
+				count(id) as fetchCount
+			FROM
+				(SELECT
+					day,_id as id
+				FROM
+					collector.t_fetchlog
+				WHERE
+					police_number = #{dogId} AND fk_device_unique = #{dUnique}) a
+			GROUP BY day) b
+	</select>
+    <!-- 查询大蜜蜂采集日志相关的信息,包括对应的采集时间以及采集上传单位 -->
+    <select id="findAboutFetchLogByDeviceUnique" parameterType="String" resultType="map">
+		SELECT
+			ctf.fk_device_unique AS device_unique,ctf.fetchtime,ctf.department_code
+			,ctf.police_number as softDogNumber,ctf.type
+		FROM
+			collector.t_fetchlog ctf
+		WHERE
+			ctf.fk_device_unique = #{unique} AND (ctf.type = 1 or ctf.type = 3)
+	</select>
+    <!-- 查询小蜜蜂采集日志相关的信息,包括对应的采集时间以及采集上传单位 -->
+    <select id="findSBeeFetchDetailByDeviceUnique" parameterType="string" resultType="map">
+		SELECT
+			ctf.fk_device_unique AS device_unique,ctf.fetchtime,ctf.department_code
+			,ctf.police_number as softDogNumber,ctf.type
+		FROM
+			collector.t_fetchlog ctf
+		WHERE
+			ctf.fk_device_unique = #{unique} AND ctf.type = 2
+	</select>
+	<select id="findDepartmentCodeByUnique" parameterType="string" resultType="String">
+		SELECT
+			ctf.department_code
+		FROM
+			collector.t_fetchlog ctf
+		WHERE
+			ctf.fk_device_unique = #{unique} AND (ctf.type = 1 or ctf.type = 3)
+	</select>
+</mapper>

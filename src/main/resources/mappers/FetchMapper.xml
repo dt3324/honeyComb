@@ -1,0 +1,208 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnf.honeycomb.mapper.FetchMapper">
+    <!-- 查询小蜜蜂采集量统计包含单位条件以及人员条件 -->
+    <select id="findSBeeFetchLogByUnitTypeAndPNumber" parameterType="map" resultType="map">
+        SELECT
+        police_number pNumber
+        ,count(*) AS total
+        ,any_value(department_code)
+        FROM
+        collector.t_fetchlog ctcf
+        WHERE type = 2
+        <if test="departCode != null">
+            AND department_code LIKE '${departCode}%'
+        </if>
+        <if test="policeNumber != null">
+            AND police_number LIKE '%${policeNumber}%'
+        </if>
+        <if test="startDate != null">
+            AND ctcf.fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ctcf.fetchtime &lt;= #{endDate}
+        </if>
+        GROUP BY police_number
+        ORDER BY total DESC
+        <if test="start != null  and end !=null">
+            limit #{start},#{end}
+        </if>
+    </select>
+
+    <!-- 统计根据不同的单位代码长度统计对应的单位 -->
+    <select id="countSBeeFetch" parameterType="map" resultType="map">
+        SELECT
+        <if test="codeLength == 11">
+            a.department_code AS code,
+        </if>
+        <if test="codeLength == 6">
+            concat(left(a.department_code,#{codeLength}),"00000") AS code,
+        </if>
+        <if test="codeLength == 4">
+            concat(left(a.department_code,#{codeLength}),"0000000") AS code,
+        </if>
+        <if test="codeLength == 2">
+            concat(left(a.department_code,#{codeLength}),"000000000") AS code,
+        </if>
+        COUNT(*) AS total
+        FROM
+        collector.t_fetchlog a
+        WHERE
+        type = 2
+        <if test="startDate != null">
+            AND fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND fetchtime &lt;= #{endDate}
+        </if>
+        <if test="departCode != null">
+            AND a.department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY code
+        ORDER BY total DESC
+    </select>
+
+    <!-- 统计根据不同的单位代码长度统计对应的单位 -->
+    <select id="countBBeeFetchDist" parameterType="map" resultType="map">
+        SELECT
+        <if test="codeLength == 11">
+            a.department_code AS code,
+        </if>
+        <if test="codeLength == 6">
+            concat(left(a.department_code,#{codeLength}),"00000") AS code,
+        </if>
+        <if test="codeLength == 4">
+            concat(left(a.department_code,#{codeLength}),"0000000") AS code,
+        </if>
+        <if test="codeLength == 2">
+            concat(left(a.department_code,#{codeLength}),"000000000") AS code,
+        </if>
+        COUNT(distinct fk_device_unique) AS total
+        FROM
+        collector.t_fetchlog a
+        WHERE
+        (type = 1 or type = 3)
+        <if test="startDate != null">
+            AND fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND fetchtime &lt;= #{endDate}
+        </if>
+        <if test="departCode != null">
+            AND a.department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY code
+        ORDER BY total DESC
+    </select>
+    <!-- 统计根据不同的单位代码长度统计对应的单位 -->
+    <select id="countBBeeFetch" parameterType="map" resultType="map">
+        SELECT
+        <if test="codeLength == 11">
+            a.department_code AS code,
+        </if>
+        <if test="codeLength == 6">
+            concat(left(a.department_code,#{codeLength}),"00000") AS code,
+        </if>
+        <if test="codeLength == 4">
+            concat(left(a.department_code,#{codeLength}),"0000000") AS code,
+        </if>
+        <if test="codeLength == 2">
+            concat(left(a.department_code,#{codeLength}),"000000000") AS code,
+        </if>
+        COUNT(fk_device_unique) AS total
+        FROM
+        collector.t_fetchlog a
+        WHERE
+        (type = 1 or type = 3)
+        <if test="startDate != null">
+            AND fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND fetchtime &lt;= #{endDate}
+        </if>
+        <if test="departCode != null">
+            AND a.department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY code
+        ORDER BY total DESC
+    </select>
+
+    <!-- 统计单位下每个警员的采集次数 -->
+    <select id="countBBeeFetchByCompleteDepartCodeOrPnumber" parameterType="map" resultType="map">
+        SELECT
+        police_number code,count(*) AS total
+        FROM
+        collector.t_fetchlog
+        WHERE
+        (type = 1 or type = 3)
+        <if test="startDate != null">
+            AND fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND fetchtime &lt; #{endDate}
+        </if>
+        <if test="pNumber != null">
+            AND police_number = #{pNumber}
+        </if>
+        <if test="departCode != null">
+            AND department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY code
+        ORDER BY total DESC
+    </select>
+
+    <!-- 统计单位下每个警员的采集次数 -->
+    <select id="countBBeeFetchByCompleteDepartCodeOrPnumberDist" parameterType="map" resultType="map">
+        SELECT
+        police_number code,count(distinct fk_device_unique) AS total
+        FROM
+        collector.t_fetchlog
+        WHERE
+        (type = 1 or type = 3)
+        <if test="startDate != null">
+            AND fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND fetchtime &lt; #{endDate}
+        </if>
+        <if test="pNumber != null">
+            AND police_number = #{pNumber}
+        </if>
+        <if test="departCode != null">
+            AND department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY code
+        ORDER BY total DESC
+    </select>
+    <!-- 统计完全的单位代码后根据对应的人员进行统计 -->
+    <select id="countSBeeFetchByCompleteDepartCodeOrPnumber" parameterType="map" resultType="map">
+        SELECT
+        a.police_number AS 'code',SUM(a.total) AS total,any_value(a.department_code)
+        FROM
+        (SELECT
+        police_number,count(*) AS total,department_code
+        FROM
+        collector.t_fetchlog ctcf
+        WHERE
+        type = 2
+        <if test="startDate != null">
+            AND ctcf.fetchtime &gt;= #{startDate}
+        </if>
+        <if test="endDate != null">
+            AND ctcf.fetchtime &lt;= #{endDate}
+        </if>
+        <if test="pNumber != null">
+            AND ctcf.police_number = #{pNumber}
+        </if>
+        GROUP BY
+        police_number,department_code) a
+        WHERE 1 = 1
+        <if test="departCode != null">
+            AND a.department_code LIKE '${departCode}%'
+        </if>
+        GROUP BY a.police_number
+        ORDER BY total DESC
+    </select>
+</mapper>

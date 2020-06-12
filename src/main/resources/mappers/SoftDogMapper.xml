@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hnf.honeycomb.mapper.SoftDogMapper">
+
+    <resultMap id="FetchLogBeanMap" type="com.hnf.honeycomb.bean.FetchLogBean">
+        <id column="id" property="id"/>
+        <result column="fetchday" property="fetchTime"/>
+        <result column="fk_key_id" property="keyId"/>
+        <result column="fk_device_unique" property="deviceUnique"/>
+        <result column="department_code" property="departmentCode"/>
+        <result column="police_number" property="policeNumber"/>
+        <result column="type" property="type"/>
+    </resultMap>
+    <!-- 每个警员采集的次数 -->
+    <select id="findSoftDogDetailBySomeCondition" parameterType="map" resultType="map">
+
+        SELECT
+        any_value(department_code) department_code,count(*) AS fetchCount,police_number policeNumber,any_value(type)
+        FROM
+        collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="policeNumber != null">
+                and police_number like "%"#{policeNumber}"%"
+            </if>
+            <if test="departCode != null">
+                and department_code like #{departCode}"%"
+            </if>
+        </where>
+        group by police_number
+        HAVING
+        1 = 1
+        <if test="fetchCount != null">
+            <![CDATA[AND fetchCount > #{fetchCount}]]>
+        </if>
+        <if test="fetchCount1 != null">
+            <![CDATA[AND fetchCount = #{fetchCount1}]]>
+        </if>
+        ORDER BY fetchCount DESC
+        <if test="start != null and end != null">
+            limit #{start},#{end}
+        </if>
+    </select>
+
+    <!-- 统计没有警号的单位 -->
+    <select id="findDepartByPoilceNumIsNull" parameterType="map" resultType="map">
+
+        SELECT
+        any_value(department_code) department_code,count(*) AS fetchCount,police_number policeNumber,any_value(type)
+        FROM
+        collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="policeNumberIsNull != null">
+                and police_number = ""
+            </if>
+            <if test="departCode != null">
+                and department_code like #{departCode}"%"
+            </if>
+        </where>
+        group by department_code,police_number
+        HAVING
+        1 = 1
+        <if test="fetchCount != null">
+            <![CDATA[AND fetchCount > #{fetchCount}]]>
+        </if>
+        <if test="fetchCount1 != null">
+            <![CDATA[AND fetchCount = #{fetchCount1}]]>
+        </if>
+        ORDER BY fetchCount DESC
+        <if test="start != null and end != null">
+            limit #{start},#{end}
+        </if>
+    </select>
+
+    <!-- 每个警员采集单位数的数 -->
+    <select id="findDeparts" parameterType="map" resultType="String">
+        SELECT department_code department_code
+        FROM collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="policeNumber != null">
+                and police_number like "%"#{policeNumber}"%"
+            </if>
+        </where>
+        group by department_code
+    </select>
+
+    <!-- 每个警员采集的部数 -->
+    <select id="findSoftDogDetailBySomeConditionDist" parameterType="map" resultType="map">
+
+        SELECT
+        any_value(department_code) department_code,count(DISTINCT fk_device_unique) AS fetchCount,police_number policeNumber,any_value(type)
+        FROM
+        collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="policeNumber != null">
+                and police_number like "%"#{policeNumber}"%"
+            </if>
+            <if test="departCode != null">
+                and department_code like #{departCode}"%"
+            </if>
+        </where>
+        group by police_number
+        HAVING
+        1 = 1
+        <if test="fetchCount != null">
+            <![CDATA[AND fetchCount > #{fetchCount}]]>
+        </if>
+        <if test="fetchCount1 != null">
+            <![CDATA[AND fetchCount = #{fetchCount1}]]>
+        </if>
+        ORDER BY fetchCount DESC
+        <if test="start != null and end != null">
+            limit #{start},#{end}
+        </if>
+    </select>
+    <!-- 部门下未填警员的采集部数 -->
+    <select id="findSoftDogDetailBySomeConditionDistAndPNisNull" parameterType="map" resultType="map">
+
+        SELECT
+        any_value(department_code) department_code,count(DISTINCT fk_device_unique) AS fetchCount,any_value(police_number) policeNumber,any_value(type) type
+        FROM
+        collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="departCode != null">
+                and department_code = #{departCode}
+            </if>
+            <if test="policeNumberIsNull != null">
+                and police_number = ""
+            </if>
+        </where>
+    </select>
+
+    <select id="findSoftDogDetailCount" parameterType="map" resultType="Integer">
+
+        select count(*)
+        from (
+        SELECT police_number policeNumber
+        FROM
+        collector.t_fetchlog
+        <where>
+            <if test="type != null">
+                and type in
+                <foreach collection="type" open="(" close=")" separator="," item="t" index="index">
+                    #{t}
+                </foreach>
+            </if>
+            <if test="policeNumber != null">
+                and police_number like "%"#{policeNumber}"%"
+            </if>
+            <if test="departCode != null">
+                and department_code like #{departCode}"%"
+            </if>
+        </where>
+        group by police_number
+        HAVING
+        1 = 1
+        <if test="fetchCount != null">
+            <![CDATA[AND fetchCount > #{fetchCount} ]]>
+        </if>
+        <if test="fetchCount1 != null">
+            <![CDATA[AND fetchCount = #{fetchCount1} ]]>
+        </if>
+        ) a
+    </select>
+
+    <select id="findFetchDetailBySomeCondition" resultType="string" parameterType="map">
+        SELECT fk_device_unique deviceUnique
+        FROM
+        collector.t_fetchlog
+        WHERE
+        type = 1
+        <if test="departmentCode != null">
+            and department_code like concat(#{departmentCode},'%')
+        </if>
+        <if test="policeNumber != null">
+            and police_number = #{policeNumber}
+        </if>
+        <if test="startTime != null">
+            and fetchtime >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and #{endTime} > fetchtime
+        </if>
+    </select>
+
+    <select id="findPoliceNumberListByDepartmentCode" resultType="map">
+        SELECT police_number policeNumber
+        FROM
+        collector.t_fetchlog
+        WHERE
+        type = 1
+        <if test="departCode != null">
+            and department_code like concat(#{departCode},'%')
+        </if>
+        <if test="startTime != null">
+            and fetchtime >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and #{endTime} >= fetchtime
+        </if>
+        group by police_number
+    </select>
+
+    <select id="findChildrenListByDepartmentCode" resultType="map">
+        SELECT department_code departmentCode
+        FROM
+        collector.t_fetchlog
+        WHERE
+        type = 1
+        <if test="departCode != null">
+            and department_code like concat(#{departCode},'%')
+        </if>
+        <if test="startTime != null">
+            and fetchtime >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and #{endTime} >= fetchtime
+        </if>
+        group by department_code
+    </select>
+
+    <select id="findChildDepartmentByCode" resultType="map">
+        SELECT left(department_code,#{size}) departmentCode
+        FROM
+        collector.t_fetchlog
+        WHERE
+        type = 1
+        <if test="departCode != null">
+            and department_code like CONCAT(#{departCode},'%')
+        </if>
+        <if test="startTime != null">
+            and fetchtime >= #{startTime}
+        </if>
+        <if test="endTime != null">
+            and #{endTime} > fetchtime
+        </if>
+        group by departmentCode
+    </select>
+
+</mapper>

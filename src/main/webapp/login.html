@@ -1,0 +1,199 @@
+﻿<!DOCTYPE html>
+<html>
+<head lang="zh-CN">
+    <meta charset="UTF-8">
+    <meta http-equiv="Access-Control-Allow-Origin" content="*"/>
+    <meta http-equiv="Expires" CONTENT="0">
+    <meta http-equiv="Cache-Control" CONTENT="no-cache">
+    <meta http-equiv="Pragma" CONTENT="no-cache">
+    <title>登录</title>
+    <link rel="stylesheet" href="/Communicate/css/bootstrap.css"/>
+    <link rel="stylesheet" href="/Communicate/css/login.css"/>
+</head>
+
+<body style="overflow: hidden;width: 100%;height: 100%;">
+<!--登录表单-->
+<div id="loginKuang">
+    <!--登录用户切换-->
+    <div class="login-DL-change">
+        <span class="adminTilSed" onclick="domesticLand(1)">普通用户登录</span>
+        <img src="/Communicate/img/login/login_03.png" alt=""/>
+        <span onclick="domesticLand(2)">管理员登录</span>
+    </div>
+    <!--#登录用户切换-->
+    <!--普通用户登录-->
+    <form class="form-horizontal admin" id="adminLogin">
+        <span id="loginUserYz"></span>
+        <div class="form-group">
+            <label for="inputUser3" id="inputUser">
+                <img src="/Communicate/img/login/login_01.png" alt=""/>
+            </label>
+            <div class="adminUserText">
+                <input type="text" class="form-control login-user adminUser" id="inputUser3" name="name"
+                       placeholder="请输入警号">
+                <p class="text-left">! 没有此账户</p>
+            </div>
+        </div>
+
+        <span id="loginPasswordYz"></span>
+        <div class="form-group">
+            <label for="inputPassword3" id="inputUser1">
+                <img src="/Communicate/img/login/login_02.png" alt=""/>
+            </label>
+            <div class="adminPasswordText">
+                <input type="password" class="form-control login-password" id="inputPassword3" name="password"
+                       placeholder="请输入密码">
+                <p class="text-left">! 密码错误</p>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <div class="login-DL-space">&nbsp;</div>
+            <div id="tjBtn">
+                <button type="button" class="btn btn-default login-dl" onclick="loginAdmindlOnclick()">登录</button>
+            </div>
+        </div>
+        <div class="form-group" style='margin-top:10px'>
+            <div style="text-indent:20%">
+                <span onclick="pkiAuthentication()"
+                      style="color:#428bca;cursor:pointer;margin-left: 20px;">数字证书登录</span>
+            </div>
+        </div>
+    </form>
+</div>
+<!--#登录表单-->
+<!--pki数字证书登录切换选择  -->
+<div id="loginKuangChange" style='display:none'>
+    <div class="login-DL-change" style='line-height:56px'>
+        <img src='img/login/success.png' style='margin:0 16px'/><span
+            style='color:#333333;font-size:16px'>验证成功，请选择登录方式</span>
+    </div>
+    <div class='ChangeLogin'>
+        <input type='button' value='管理员登录' style='background:#3278cc'/>
+        <br/>
+        <input type='button' value='普通用户登录' style='background:#3dbf52'/>
+    </div>
+</div>
+<!--#pki数字证书登录切换选择  -->
+<!--登录背景-->
+<div class="login-bg">
+    <img src="img/login/login_LOGIN0.jpg" class="img-responsive center-block" alt=""/>
+</div>
+<!--#登录背景-->
+<!--登录标志-->
+<div id="loginLogo">
+    <div>
+        <!--警徽-->
+        <img src="/Communicate/img/login/logo_01.png" alt=""/>
+    </div>
+    <div style="margin-top: 25px;">
+        <!--登录页logo-->
+        <img src="img/login/login_fc.png"/>
+        <!--#登录页logo-->
+    </div>
+</div>
+<!--#登录标志-->
+<!--软件所属-->
+<div id="union">
+    <!--<span>绵阳市公安局 | 成都海纳丰科技有限公司 &nbsp;&nbsp;联合研发</span>-->
+    <span>Copyright  2017  成都海纳丰科技有限公司  All Rights Reserved.</span>
+</div>
+<script type="text/javascript">
+    var isChrome = false;
+</script>
+<%
+String browser = request.getHeader("User-Agent").toLowerCase();
+if (browser.indexOf("msie")>=0||browser.indexOf("trident")>=0) {
+%>
+<object id="JITDSignOcx" classid="clsid:B0EF56AD-D711-412D-BE74-A751595F3633"></object>
+<%}else
+if(browser.indexOf("chrome/")>=0&&Integer.parseInt(browser.substring(browser.indexOf("chrome/")+7,browser.indexOf(".",browser.indexOf("chrome/")+7)))>=45){%>
+<script type="text/javascript">isChrome = true;</script>
+<%}else{
+%>
+<embed id="JITDSignOcx" type="application/x-jit-sign-vctk-s-plugin-boc" width="0" height="0"/>
+<%}%>
+<!--#软件所属-->
+<!-- 认证表单 -->
+<div style="display:none;">
+    <div>
+        <form id="certAuth" name="certAuth" method="post" action="jitGWAuth">
+            <!-- 隐藏字段 -->
+            <!-- 认证方式 -->
+            <input id="authMode" name="authMode" type="hidden" value="cert">
+            <!-- 认证原文 -->
+            <input type="hidden" id="original" name="original"/>
+            <!-- 签名结果 -->
+            <input type="hidden" id="signed_data" name="signed_data"/>
+        </form>
+    </div>
+</div>
+</body>
+<object id="TESTVCTKEx" classid="clsid:B0EF56AD-D711-412D-BE74-A751595F3633"
+        codebase="gw/JITComVCTK_S.cab#version=2,1,9,1"></object>
+<!-- /*
+* VCTK-SPki证书支持下载
+* */ -->
+<script type="text/javascript">
+    // 认证原文不为空时，自动弹出证书选择框
+    var testSocket;
+    try {
+        var testNode = document.getElementById("TESTVCTKEx");
+        testNode.parentNode.removeChild(testNode);
+        if (window.ActiveXObject != undefined && window.navigator.userAgent.indexOf("MSIE") != -1 || !!window.ActiveXObject || "ActiveXObject" in window) {
+        } else {
+            if (window.WebSocket) {
+                testSocket = new WebSocket("ws://127.0.0.1:45678");
+            } else if ('MozWebSocket' in window) {
+                testSocket = new MozWebSocket("ws://127.0.0.1:45678");
+            } else {
+                alert("浏览器暂时不支持WebSocket！");
+            }
+            testSocket.onerror = function () {
+                show("未检测到全浏览器版本VCTK-S");
+            };
+            testSocket.onopen = function () {
+                testSocket.send('{"name":"JITGetVersion"}');
+            };
+            testSocket.onmessage = function (ev) {
+                var ver = JSON.parse(ev.data).value;
+                testSocket.close();
+                if (checkVersion(ver)) {
+                    show("检测到新版本VCTK-S");
+                }
+            };
+        }
+    } catch (e) {
+        show("未检测到VCTK-S");
+    }
+
+    function show(mes) {
+        if (confirm(mes + "，是否下载VCTK-S安装包？")) {
+            location.href = "pki/jitDownloadVCTK";
+        }
+    }
+
+    function checkVersion(ver) {
+        var version = "2.1.9.0";
+        var flag = false;
+        var arry = ver.split(".");
+        var arrys = version.split(".");
+        arry.forEach(function (a, i) {
+            if (a < arrys[i]) {
+                flag = true;
+                return;
+            } else if (a > arrys[i]) {
+                return;
+            }
+        });
+        return flag;
+    }
+
+</script>
+</html>
+<script type="text/javascript" src="/Communicate/js/jquery.min.js"></script>
+<script type="text/javascript" src="/Communicate/js/bootstrap.js"></script>
+<script type="text/javascript" src="/Communicate/js/cookie_util.js"></script>
+<script type="text/javascript" src="/Communicate/js/login.js"></script>
+<script type="text/javascript" src="/Communicate/gw/js/authv2/GWAuth.js"></script>
+<script type="text/javascript" src="/Communicate/gw/js/authv2/JITVCTK_S_update.js"></script>
