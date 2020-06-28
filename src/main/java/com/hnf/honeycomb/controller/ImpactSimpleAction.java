@@ -356,8 +356,7 @@ public class ImpactSimpleAction extends AbstractController {
         return new JsonResult<>(
                 impactSimpleService.impactdeleteDeviceByName(
                         getString(map.get("policeNumber"))
-                        , getString(map.get("personName"))
-                        , getString(map.get("idNumber"))
+                        , getString(map.get("policeNumberKey"))
                         ,getString(map.get("departmentName"))
                 ));
     }
@@ -429,6 +428,18 @@ public class ImpactSimpleAction extends AbstractController {
                 impactSimpleService.impactAddDevicesByCase(
                         getString(map.get("policeNumber"))
                         , getString(map.get("caseUniqueMark"))
+                        , getString(map.get("departmentName"))
+                ));
+    }
+    /**
+     * 从案件添加碰撞设备到“购物车”
+     */
+    @RequestMapping("/impactAddDevicesByDevice")
+    public JsonResult<Object> impactAddDevicesByDevice(@RequestBody Map<String, Object> map) {
+        return new JsonResult<>(
+                impactSimpleService.impactAddDevicesByDevice(
+                        getString(map.get("policeNumber"))
+                        , getString(map.get("deviceUnique"))
                         , getString(map.get("departmentName"))
                 ));
     }

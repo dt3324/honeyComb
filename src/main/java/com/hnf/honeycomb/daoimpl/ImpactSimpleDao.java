@@ -1176,7 +1176,8 @@ public class ImpactSimpleDao {
         List<Document> list = new ArrayList<>();
         mongoDatabase = mongoClient.getDatabase("infoData2");
         collection = mongoDatabase.getCollection("t_person");
-        FindIterable<Document> resultDoc = collection.find(query); // 查询到结果
+        BasicDBObject sort = new BasicDBObject("_id", -1);
+        FindIterable<Document> resultDoc = collection.find(query).sort(sort); // 查询到结果
         for (Document d : resultDoc) {
             list.add(d);
         }
@@ -1187,7 +1188,7 @@ public class ImpactSimpleDao {
     //通过设备唯一标识查设备详情
     public List<Document> findDeviceByUnique(BasicDBObject query) {
         FindIterable<Document> resultDoc = mongoClient.getDatabase("infoData2")
-                .getCollection("fetchlog").find(query).sort(new BasicDBObject("fetchtime",-1));
+                .getCollection("fetchlog").find(query).sort(new BasicDBObject("fetchtime",-1)).limit(1);
         List<Document> list = new ArrayList<>();
         for (Document d : resultDoc) {
             String departmentName = d.getString("department_name");
@@ -1204,7 +1205,7 @@ public class ImpactSimpleDao {
         return list;
     }
 
-    //通过设备唯一标识查设备详情
+    //通过设备唯一标识查
     public List<String> findDeviceByUnique(String device) {
         List<String> l = deviceMapper.findDepartmentCodeByUnique(device);
         String departmentCode = l.get(0);
@@ -1516,6 +1517,32 @@ public class ImpactSimpleDao {
         }
 
         /**
+         * 通过设备唯一标识查询案件信息
+         *
+         * @param deviceUnique 设备唯一标识
+         * @return
+         */
+        public List<Document> finDevice (String deviceUnique){
+            MongoDatabase mongoDatabase;
+            MongoCollection<Document> collection;
+            if (deviceUnique != null) {
+                Document query = new Document();
+                query.append("device_unique", deviceUnique);
+                mongoDatabase = mongoClient.getDatabase("infoData2");
+                collection = mongoDatabase.getCollection("t_device");
+                //将最后转化成的json放到list里
+                List<Document> list = new ArrayList<>();
+                //查询到结果 t_device表中设备唯一识别号是唯一的
+                FindIterable<Document> resultDoc = collection.find(query).limit(1);
+                for (Document d : resultDoc) {
+                    list.add(d);
+                }
+                return list;
+            }
+            return null;
+        }
+
+        /**
          * 通过证件号查询人员信息
          *
          * @param usernumber 证件号
@@ -1530,10 +1557,36 @@ public class ImpactSimpleDao {
                 //listResult = Common.commonFind(query, "t_qquser");
                 mongoDatabase = mongoClient.getDatabase("infoData2");
                 collection = mongoDatabase.getCollection("t_person");
-                List<Document> list = new ArrayList<Document>();            //将最后转化成的json放到list里
+                List<Document> list = new ArrayList<>();            //将最后转化成的json放到list里
                 FindIterable<Document> resultDoc = collection.find(query);    //查询到结果
                 for (Document d : resultDoc) {
                     list.add(d);
+                }
+                return list;
+            }
+            return null;
+        }
+
+        /**
+         * 通过证件号查询人员信息
+         *
+         * @param userNumber 证件号
+         * @return
+         */
+        public List<Document> finPersons (List<String> userNumber){
+            MongoCollection<Document> collection;
+            if (userNumber != null && !userNumber.isEmpty()) {
+                Document query = new Document();
+                query.append("usernumber", new BasicDBObject(QueryOperators.IN,userNumber));
+                collection = mongoClient.getDatabase("infoData2").getCollection("t_person");
+                //将最后转化成的json放到list里
+                List<Document> list = new ArrayList<>();
+                //查询到结果
+                FindIterable<Document> resultDoc = collection.find(query);
+                for (Document d : resultDoc) {
+                    if(!list.contains(d)){
+                        list.add(d);
+                    }
                 }
                 return list;
             }

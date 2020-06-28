@@ -921,8 +921,7 @@ public class EsDeviceServiceImpl implements EsDeviceService {
                 String nickname = document.getString("nickname");
                 wxNumbers.add(nickname);
             }
-            List<String> searchWxNumbers = new ArrayList<>();
-            searchWxNumbers.addAll(wxNumbers);
+            List<String> searchWxNumbers = new ArrayList<>(wxNumbers);
             Map<String, String> uin2Nick =
                     this.findWXNumber2WXNickByWXNums(searchWxNumbers);
             for (Document t : result) {

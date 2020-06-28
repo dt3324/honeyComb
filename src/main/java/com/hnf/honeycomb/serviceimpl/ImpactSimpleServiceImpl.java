@@ -3724,8 +3724,10 @@ public class ImpactSimpleServiceImpl implements ImpactSimpleService {
     }
 
     @Override
-    public String impactdeleteDeviceByName(String policeNumber, String personName, String idNumber, String departmentName) {
-        String policeNumberKey = personName + "(" + idNumber + ")";
+    public String impactdeleteDeviceByName(String policeNumber, String policeNumberKey, String departmentName) {
+        if(com.hnf.honeycomb.util.StringUtils.isEmpty(policeNumber)){
+            throw new RuntimeException("请传当前操作警号！");
+        }
         String impactKey = RedisUtilNew.IMPACT_DEVICE + policeNumber;
         HashMap<String, Object> impactMap = (HashMap<String, Object>) redisUtilNew.get(impactKey);
         logger.debug("impactMap:" + impactMap);
@@ -4003,6 +4005,8 @@ public class ImpactSimpleServiceImpl implements ImpactSimpleService {
         List<String> deviceSplit = (List<String>) cases.get(0).get("device_unique");
         //封装设备唯一标识信息
         List<String> deviceUniques = new ArrayList<>();
+        String impactKey = RedisUtilNew.IMPACT_DEVICE + policeNumber;
+        HashMap<String, Object> impact = (HashMap<String, Object>) redisUtilNew.get(impactKey);
         for (int i = 0; i < usernumber.size(); i++) {
             //查询人员信息
             List<Document> persons = impactSimpleDao.finPerson(usernumber.get(i));
@@ -4018,40 +4022,115 @@ public class ImpactSimpleServiceImpl implements ImpactSimpleService {
             //查询设备详情
             List<Document> devices = impactSimpleDao.deviceFindByDeviceUnique(deviceUniques);
             deviceUniques.clear();
-            String impactKey = RedisUtilNew.IMPACT_DEVICE + policeNumber;
             String policeNumberKey = persons.get(0).get("personname") + "(" + usernumber.get(i) + ")";
-            HashMap<String, Object> impact = (HashMap<String, Object>) redisUtilNew.get(impactKey);
             List<Map<String, Object>> impactList = null;
             if (impact != null) {
                 impactList = (List<Map<String, Object>>) impact.get(departmentName);
                 if (impactList != null) {
+                    //判断policeNumberKey在impactList存不存在
+                    boolean isExistKey = true;
                     for (Map<String, Object> map : impactList) {
                         if (policeNumberKey.equals(map.get("policeNumberKey"))) {
+                            isExistKey = false;
                             List<Document> deviceList = (List<Document>) map.get("devices");
                             if (!CollectionUtils.isEmpty(deviceList)) {
                                 devices.stream().filter(device -> !deviceList.contains(device)).forEach(deviceList::add);
-                                return "save redis success!";
+//                                return "save redis success!";
                             } else {
                                 map.put("devices", devices);
-                                return "save redis success!";
+//                                return "save redis success!";
                             }
                         }
                     }
+                    if(isExistKey){
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("policeNumberKey", policeNumberKey);
+                        map.put("devices", devices);
+                        impactList.add(map);
+                    }
                 } else {
                     impactList = new ArrayList<>();
+                    Map<String, Object> newMap = new HashMap<>();
+                    newMap.put("policeNumberKey", policeNumberKey);
+                    newMap.put("devices", devices);
+                    impactList.add(newMap);
                 }
             } else {
-                impact = new HashMap<>();
                 impactList = new ArrayList<>();
+                impact = new HashMap<>();
+                Map<String, Object> newMap = new HashMap<>();
+                newMap.put("policeNumberKey", policeNumberKey);
+                newMap.put("devices", devices);
+                impactList.add(newMap);
             }
-            Map<String, Object> newMap = new HashMap<>();
-            newMap.put("policeNumberKey", policeNumberKey);
-            newMap.put("devices", devices);
-            impactList.add(newMap);
 
             impact.put(departmentName, impactList);
-            redisUtilNew.set(impactKey, impact);
         }
+        redisUtilNew.set(impactKey, impact);
+        return "save redis success!";
+    }
+
+    @Override
+    public String impactAddDevicesByDevice(String policeNumber, String deviceUnique, String departmentName) {
+        // TODO Auto-generated method stub
+        if (StringUtils.isEmpty(deviceUnique)) {
+            throw new RuntimeException("设备唯一标识为空");
+        }
+        //保存至redis//查询案件信息
+        List<Document> devices = impactSimpleDao.finDevice(deviceUnique);
+        //查询设备下面的人员信息
+        List<String> userNumbers = (List<String>) devices.get(0).get("usernumber");
+        String impactKey = RedisUtilNew.IMPACT_DEVICE + policeNumber;
+        HashMap<String, Object> impact = (HashMap<String, Object>) redisUtilNew.get(impactKey);
+        List<Document> list = impactSimpleDao.finPersons(userNumbers);
+        //多个人一部手机的时候
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < list.size() ; i++) {
+            String s = list.get(i).get("personname") + "(" + list.get(i).get("usernumber") + ")";
+            if(sb.toString().contains(s)){
+                continue;
+            }
+            if(i != list.size()-1){
+                sb.append(s);
+                sb.append("\n");
+            }else {
+                sb.append(s);
+            }
+        }
+        String policeNumberKey =sb.toString();
+
+        List<Map<String, Object>> impactList;
+        if (impact != null) {
+            impactList = (List<Map<String, Object>>) impact.get(departmentName);
+            if (impactList != null) {
+                for (Map<String, Object> map : impactList) {
+                    if (policeNumberKey.contains(map.get("policeNumberKey")+"")) {
+                        map.put("policeNumberKey", policeNumberKey);
+                        List<Document> deviceList = (List<Document>) map.get("devices");
+                        if (!CollectionUtils.isEmpty(deviceList)) {
+                            devices.stream().filter(device -> !deviceList.contains(device)).forEach(deviceList::add);
+                            //每次只会添加一个设备  如果redis中存在就可以直接返回
+                            return "save redis success!";
+                        } else {
+                            map.put("devices", devices);
+                            return "save redis success!";
+                        }
+                    }
+                }
+            } else {
+                impactList = new ArrayList<>();
+            }
+        } else {
+            impact = new HashMap<>();
+            impactList = new ArrayList<>();
+        }
+        Map<String, Object> newMap = new HashMap<>(2);
+        newMap.put("policeNumberKey", policeNumberKey);
+        newMap.put("devices", devices);
+        impactList.add(newMap);
+
+        impact.put(departmentName, impactList);
+        redisUtilNew.set(impactKey, impact);
         return "save redis success!";
     }
 

@@ -62,4 +62,16 @@ public class ImpactCaseController extends AbstractController {
                         map.get("name")
                 ));
     }
+
+    /**
+     * 通过人员姓名模糊匹配人员
+     */
+    @RequestMapping("/findPersonByPhone")
+    public JsonResult<Object> findPersonByPhone(@RequestBody Map<String, String> map, HttpServletRequest request) {
+        return new JsonResult<>(
+                impactCaseService.findPersonByPhone(
+                        TokenUtil.getDepartmentCode(request),
+                        map.get("phone")
+                ));
+    }
 }

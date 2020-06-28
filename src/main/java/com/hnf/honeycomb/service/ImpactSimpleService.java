@@ -279,7 +279,7 @@ public interface ImpactSimpleService {
      * @param idNumber     身份证号
      * @return
      */
-    String impactdeleteDeviceByName(String policeNumber, String personName, String idNumber,String departmentName);
+    String impactdeleteDeviceByName(String policeNumber, String policeNumberKey,String departmentName);
 
     /**
      * 删除所有的碰撞设备列表，即清空设备购物车
@@ -345,6 +345,14 @@ public interface ImpactSimpleService {
      * @param caseuniquemark 案件唯一标识
      */
     String impactAddDevicesByCase(String policeNumber, String caseuniquemark,String departmentName);
+
+    /**
+     * 通过设备添加碰撞设备存入REDIS（新）
+     *
+     * @param policeNumber   警号
+     * @param deviceUnique 案件唯一标识
+     */
+    String impactAddDevicesByDevice(String policeNumber, String deviceUnique,String departmentName);
 
 
 }

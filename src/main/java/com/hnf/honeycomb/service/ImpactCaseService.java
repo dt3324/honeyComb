@@ -38,4 +38,14 @@ public interface ImpactCaseService {
     List<Document> findPersonByPersonName(String unitCode, String nameOrIdNumber);
 
 
+    /**
+     * 通过人员姓名模糊匹配人员
+     *
+     * @param unitCode       用户所在部门Code
+     * @param nameOrIdNumber 姓名或证件号
+     * @return
+     */
+    List<Document> findPersonByPhone(String unitCode, String nameOrIdNumber);
+
+
 }

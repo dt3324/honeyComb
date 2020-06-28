@@ -468,13 +468,83 @@ public class DeviceInfoServiceImpl implements DeviceInfoService {
             throw new RuntimeException("对应的wx账号为NULL");
         }
         Map<String, Object> map = new HashMap<>(4);
-        List<Document> findWx = deviceMongoDao.findInfoByDBNameAndGatherNameAndQuery(
-                "infoData2", "t_wxuser", new BasicDBObject("username", wxUin));
-        if (findWx.size() > 0) {
-            map.put("findwx", findWx.get(0));
-        } else {
-            map.put("findwx", new ArrayList<Document>());
+        //通过t_wxuser表进行查询
+        findByWxUser(wxUin, map);
+
+        //通过t_wxuser_friend表查询微信好友
+        findByWxUserFriend(wxUin, startTime, endTime, timeSelectType, searchContent, startDate, endDate, map);
+
+        //通过t_chatroom_wxuser表查询微信群消息
+        findChatRoomWxUser(wxUin, startTime, endTime, timeSelectType, searchContent, startDate, endDate, map);
+        return map;
+    }
+
+    private void findChatRoomWxUser(String wxUin, Long startTime, Long endTime, Integer timeSelectType,
+                                    String searchContent, String startDate, String endDate, Map<String, Object> map) {
+        BasicDBObject groupQuery = new BasicDBObject();
+        groupQuery.append("username", wxUin);
+        List<Document> chatroomWxUsers = deviceMongoDao.findInfoByDBNameAndGatherNameAndQuery(
+                "infoData2", "t_chatroom_wxuser", groupQuery);
+        List<String> wxChatroomUins = new ArrayList<>();
+        List<Document> wxChatrooms = new LinkedList<>();
+        if (!CollectionUtils.isEmpty(chatroomWxUsers)) {
+            chatroomWxUsers.forEach(doc -> wxChatroomUins.add(doc.get("chatroomname").toString()));
+            Map<String, Integer> chatroomUin2MsgCount = new HashMap<>(16);
+            Map<String, String> chatroonUin2troopName = new HashMap<>(16);
+            BasicDBObject group = new BasicDBObject("$group", new BasicDBObject("_id", "$chatroomname")
+                    .append("count", new BasicDBObject("$sum", 1))
+            );
+            BasicDBObject query = new BasicDBObject().append("chatroomname",
+                    new BasicDBObject(QueryOperators.IN, wxChatroomUins.toArray(new String[]{})));
+            BasicDBObject timeQuery = TimeUtils.getSearchStartDateAndEndDateByTimeSelectType(
+                    // 时间筛选条件
+                    timeSelectType, startTime, endTime);
+            if (!timeQuery.isEmpty()) {
+                query.append("msgtime", timeQuery);
+            }
+            contentFilter(searchContent, query, "msgname");
+            // 时间段筛选处理
+            BasicDBObject tQuery = TimeUtils.getTimeNode(startDate, endDate);
+            if (!tQuery.isEmpty()) {
+                query.append("timeNode", tQuery);
+            }
+            List<Document> wxRoomMsgGroupResult = deviceMongoDao.aggregateByGatheNameAndDBNameAndQuery(
+                    "infoData", "wxChatroomMsg",
+                    Arrays.asList(new BasicDBObject("$match", query), group));
+            if (!CollectionUtils.isEmpty(wxRoomMsgGroupResult)) {
+                wxRoomMsgGroupResult.forEach(t -> chatroomUin2MsgCount.put(
+                        t.getString("_id"), t.getInteger("count"))
+                );
+            }
+            BasicDBObject wxUserQuery;
+            wxUserQuery = new BasicDBObject(
+                    "chatroomname", new BasicDBObject(QueryOperators.IN, wxChatroomUins.toArray(new String[]{})));
+            BasicDBObject fileds = new BasicDBObject("chatroomname", 1)
+                    .append("chatroomnickname", 1)
+                    .append("_id", 0);
+            List<Document> wxFriendUsers = deviceMongoDao.findSomeFiledsByGatherNameAndQuery(
+                    "infoData2", "t_wxchatroom", wxUserQuery, fileds);
+            if (!CollectionUtils.isEmpty(wxFriendUsers)) {
+                wxFriendUsers.forEach(t -> chatroonUin2troopName.put(t.getString("chatroomname"),
+                        t.getString("chatroomnickname")));
+            }
+            for (String chatroomUin : wxChatroomUins) {
+                Document doc = new Document();
+                doc.append("chatroomname", chatroomUin);
+                doc.append("chatroomnickname", getString(chatroonUin2troopName.get(chatroomUin), ""));
+                Integer msgCount = getInteger(chatroomUin2MsgCount.get(chatroomUin), 0);
+                if (msgCount > 0) {
+                    doc.append("wxChatroomMsgcount", msgCount);
+                    wxChatrooms.add(doc);
+                }
+            }
+            sort(wxChatrooms, "wxChatroomMsgcount");
         }
+        map.put("chatroom_wxuser", wxChatrooms);
+    }
+
+    private void findByWxUserFriend(String wxUin, Long startTime, Long endTime, Integer timeSelectType,
+                                    String searchContent, String startDate, String endDate, Map<String, Object> map) {
         BasicDBObject querySearch = new BasicDBObject();
         querySearch.append("username", wxUin);
         List<Document> wxUserFriends = deviceMongoDao.findInfoByDBNameAndGatherNameAndQuery(
@@ -540,69 +610,16 @@ public class DeviceInfoServiceImpl implements DeviceInfoService {
             sort(wxUserFriend, "wxmsgcount");
         }
         map.put("wxuser_friend", wxUserFriend);
+    }
 
-        // 查询群
-        BasicDBObject groupQuery = new BasicDBObject();
-        groupQuery.append("username", wxUin);
-        List<Document> chatroomWxUsers = deviceMongoDao.findInfoByDBNameAndGatherNameAndQuery(
-                "infoData2", "t_chatroom_wxuser", groupQuery);
-        List<String> wxChatroomUins = new ArrayList<>();
-        List<Document> wxChatrooms = new LinkedList<>();
-        if (!CollectionUtils.isEmpty(chatroomWxUsers)) {
-            chatroomWxUsers.forEach(doc -> wxChatroomUins.add(doc.get("chatroomname").toString()));
-            Map<String, Integer> chatroomUin2MsgCount = new HashMap<>(16);
-            Map<String, String> chatroonUin2troopName = new HashMap<>(16);
-            BasicDBObject group = new BasicDBObject("$group", new BasicDBObject("_id", "$chatroomname")
-                    .append("count", new BasicDBObject("$sum", 1))
-            );
-            BasicDBObject query = new BasicDBObject().append("chatroomname",
-                    new BasicDBObject(QueryOperators.IN, wxChatroomUins.toArray(new String[]{})));
-            BasicDBObject timeQuery = TimeUtils.getSearchStartDateAndEndDateByTimeSelectType(
-                    // 时间筛选条件
-                    timeSelectType, startTime, endTime);
-            if (!timeQuery.isEmpty()) {
-                query.append("msgtime", timeQuery);
-            }
-            contentFilter(searchContent, query, "msgname");
-            // 时间段筛选处理
-            BasicDBObject tQuery = TimeUtils.getTimeNode(startDate, endDate);
-            if (!tQuery.isEmpty()) {
-                query.append("timeNode", tQuery);
-            }
-            List<Document> wxRoomMsgGroupResult = deviceMongoDao.aggregateByGatheNameAndDBNameAndQuery(
-                    "infoData", "wxChatroomMsg",
-                    Arrays.asList(new BasicDBObject("$match", query), group));
-            if (!CollectionUtils.isEmpty(wxRoomMsgGroupResult)) {
-                wxRoomMsgGroupResult.forEach(t -> chatroomUin2MsgCount.put(
-                        t.getString("_id"), t.getInteger("count"))
-                );
-            }
-            BasicDBObject wxUserQuery;
-            wxUserQuery = new BasicDBObject(
-                    "chatroomname", new BasicDBObject(QueryOperators.IN, wxChatroomUins.toArray(new String[]{})));
-            BasicDBObject fileds = new BasicDBObject("chatroomname", 1)
-                    .append("chatroomnickname", 1)
-                    .append("_id", 0);
-            List<Document> wxFriendUsers = deviceMongoDao.findSomeFiledsByGatherNameAndQuery(
-                    "infoData2", "t_wxchatroom", wxUserQuery, fileds);
-            if (!CollectionUtils.isEmpty(wxFriendUsers)) {
-                wxFriendUsers.forEach(t -> chatroonUin2troopName.put(t.getString("chatroomname"),
-                        t.getString("chatroomnickname")));
-            }
-            for (String chatroomUin : wxChatroomUins) {
-                Document doc = new Document();
-                doc.append("chatroomname", chatroomUin);
-                doc.append("chatroomnickname", getString(chatroonUin2troopName.get(chatroomUin), ""));
-                Integer msgCount = getInteger(chatroomUin2MsgCount.get(chatroomUin), 0);
-                if (msgCount > 0) {
-                    doc.append("wxChatroomMsgcount", msgCount);
-                    wxChatrooms.add(doc);
-                }
-            }
-            sort(wxChatrooms, "wxChatroomMsgcount");
+    private void findByWxUser(String wxUin, Map<String, Object> map) {
+        List<Document> findWx = deviceMongoDao.findInfoByDBNameAndGatherNameAndQuery(
+                "infoData2", "t_wxuser", new BasicDBObject("username", wxUin));
+        if (findWx.size() > 0) {
+            map.put("findwx", findWx.get(0));
+        } else {
+            map.put("findwx", new ArrayList<Document>());
         }
-        map.put("chatroom_wxuser", wxChatrooms);
-        return map;
     }
 
     private void sort(List<Document> sortList, String field) {
