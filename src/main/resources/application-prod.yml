@@ -38,7 +38,7 @@ mongo:
   # 可自行按以上格式添加集群服务器 // 注意符号 - 和缩进
 spring:
   ftp:
-    ip: 192.168.99.231
+    ip: 192.168.99.115
     port: 21
     user: downloader
     pwd: downloaderfc

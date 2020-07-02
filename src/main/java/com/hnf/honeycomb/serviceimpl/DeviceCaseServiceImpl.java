@@ -38,8 +38,8 @@ public class DeviceCaseServiceImpl implements DeviceCaseService {
         //每次查询的所有条件组为key
         String keyNameCount = page + departmentCode + caseName + "count";
         String keyNameList = page + departmentCode + caseName + "List";
-        Map<String, Object> redisCaseMap = null;
-//        Map<String, Object> redisCaseMap = (Map<String, Object>) redisUtilNew.get(DeviceServiceImpl.redisCaseName);
+//        Map<String, Object> redisCaseMap = null;
+        Map<String, Object> redisCaseMap = (Map<String, Object>) redisUtilNew.get(DeviceServiceImpl.redisCaseName);
         //如果是第一次 避免空指针需要给它new一个
         if(redisCaseMap == null){
             redisCaseMap = new HashMap<>(2);
@@ -89,9 +89,6 @@ public class DeviceCaseServiceImpl implements DeviceCaseService {
             findQuery2.put("caseuniquemark", new BasicDBObject("$in",caseUniqueMarks));
             List<Document> infoByGatherNameAndQuery = deviceMongoDao.findInfoByGatherNameAndQueryAll("infoData2",
                     "t_case", findQuery2);
-            if(findCaseBase == null){
-                findCaseBase = new ArrayList<>();
-            }
             findCaseBase.addAll(infoByGatherNameAndQuery);
         }
         BasicDBObject group1 = new BasicDBObject("$group", new BasicDBObject("_id",
