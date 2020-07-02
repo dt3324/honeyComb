@@ -7,17 +7,8 @@ public class MyQueue {
     private List<String> list;
 
     public static void main(String[] args) {
-        MyQueue myQueue = new MyQueue();
-        myQueue.push("1");
-        myQueue.push("2");
-        myQueue.push("3");
-        myQueue.push("4");
-
-        String pull = myQueue.pull();
-        while (pull != null){
-            System.out.println(pull);
-            pull = myQueue.pull();
-        }
+        String s = "111111111" + "\r\n"+"222222222222222";
+        System.out.println(s.contains("11"));
     }
 
     /**存数据*/
