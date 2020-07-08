@@ -18,8 +18,7 @@ import java.util.regex.Pattern;
 
 import static com.hnf.honeycomb.util.ObjectUtil.getInteger;
 
-class Solution {
-
+public class Solution {
 
 //    public static void main(String[] args) {
 //        //213
@@ -37,21 +36,106 @@ class Solution {
 //        return "";
 //    }
 
+private final int L = 9;
+
     public static void main(String[] args) {
         Solution solution = new Solution();
-        char[][] chars = new char[9][9];
-        chars[0] = new char[]{'5','3','.','.','7','.','.','.','.'};
-        chars[1] = new char[]{'6','.','.','1','9','5','.','.','.'};
-        chars[2] = new char[]{'.','9','8','.','.','.','.','6','.'};
-        chars[3] = new char[]{'8','.','.','.','6','.','.','.','3'};
-        chars[4] = new char[]{'4','.','.','8','.','3','.','.','1'};
-        chars[5] = new char[]{'7','.','.','.','2','.','.','.','6'};
-        chars[6] = new char[]{'.','6','.','.','.','.','2','8','.'};
-        chars[7] = new char[]{'.','.','.','4','1','9','.','.','5'};
-        chars[8] = new char[]{'.','.','.','.','8','.','.','7','9'};
-        System.out.println( solution.isValidSudoku(chars));
+        TreeNode treeNode = new TreeNode(5);
+        treeNode.left = new TreeNode(1);
+        System.out.println(solution.countAndSay(5));
     }
-    private final int L = 9;
+
+    public String countAndSay(int n) {
+        StringBuilder res = new StringBuilder("1");
+        if(n == 1 ) return res.toString();
+        for (int i = 2; i <= n; i++) {
+            String s = res.toString();
+            res = new StringBuilder();
+            int a = 0;
+            char first = s.charAt(a);
+            for (int j = 0; j < s.length(); j++) {
+                if(s.charAt(j) == first){
+                    a++;
+                }else {
+                    res.append(a ).append(first);
+                    a = 0;
+                    first = s.charAt(j);
+                    j--;
+                }
+            }
+            res.append(a).append(first);
+        }
+        return res.toString();
+    }
+
+    public int[] divingBoard(int shorter, int longer, int k) {
+        if (k == 0) return new int[]{};
+        if (shorter == longer) return new int[]{k * shorter};
+        int[] ints = new int[k + 1];
+        for (int i = 0; i <= k; i++) {
+            ints[i] = shorter * (k - i) + longer * i;
+        }
+        return ints;
+    }
+
+    public boolean hasPathSum(TreeNode root, int sum) {
+        return isMeet(root , sum , 0);
+    }
+
+    private boolean isMeet(TreeNode root, int sum,int add){
+        if(add + root.val == sum && root.left == null && root.right == null){
+            return true;
+        }
+        boolean a = false;
+        boolean b = false;
+        if(root.left != null){
+            a = isMeet(root.left, sum, add + root.val);
+        }
+        if(root.right != null){
+            b = isMeet(root.right, sum, add + root.val);
+        }
+        return  a || b;
+    }
+
+    int fib(int N) {
+        if (N == 1 || N == 2) return 1;
+        return fib(N - 1) + fib(N - 2);
+    }
+
+    public int uniquePathsWithObstacles(int[][] obstacleGrid) {
+        int n = obstacleGrid.length, m = obstacleGrid[0].length;
+        int[] f = new int[m];
+
+        f[0] = obstacleGrid[0][0] == 0 ? 1 : 0;
+        for (int i = 0; i < n; ++i) {
+            for (int j = 0; j < m; ++j) {
+                if (obstacleGrid[i][j] == 1) {
+                    f[j] = 0;
+                    continue;
+                }
+                if (j - 1 >= 0 && obstacleGrid[i][j - 1] == 0) {
+                    f[j] += f[j - 1];
+                }
+            }
+        }
+
+        return f[m - 1];
+    }
+
+    public int uniquePathsWithObstacles1(int[][] obstacleGrid) {
+        if(obstacleGrid.length < 1 || obstacleGrid[0].length < 1) return 0;
+        return getSize(obstacleGrid, 0, 0, 0);
+    }
+
+    private int getSize(int[][] obstacleGrid, int x, int y ,int size){
+        if(x > obstacleGrid[0].length - 1) return 0;
+        if(y > obstacleGrid.length - 1) return 0;
+        if(x == obstacleGrid[0].length - 1 && y == obstacleGrid.length - 1 && obstacleGrid[y][x] == 0) return 1;
+        if(obstacleGrid[y][x] == 0){
+            return getSize(obstacleGrid, x + 1, y, size) + getSize(obstacleGrid, x, y + 1, size);
+        }
+        return 0;
+    }
 
     public boolean isValidSudoku(char[][] board) {
         boolean[][] rows = new boolean[L][L];
